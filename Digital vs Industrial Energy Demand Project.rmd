@@ -1,0 +1,86 @@
+## Digital vs Industrial Energy Demand: How AI and Data Centres Are Reshaping U.S. Electricity Consumption
+
+#### Tobi Adebowale
+
+I chose this topic because it reflects an emerging intersection between computer science and energy economics. The commercial sector captures electricity used by data centres, server farms, and cloud-computing environments, the physical infrastructure that supports modern AI systems. Examining this data allows me to see how the rapid scale-up of computation, storage, and digital services appears in national electricity statistics.
+
+The chart shows that from 2014 to 2024, commercial electricity consumption increases consistently, while industrial consumption remains comparatively stable. This divergence is significant because it suggests that the growth in U.S. electricity demand is increasingly driven by digital infrastructure rather than traditional manufacturing. Large-scale AI model training, continuous cloud hosting, and persistent data processing require substantial and uninterrupted power, contributing to the upward trajectory in commercial demand. Meanwhile, industrial electricity use shows limited growth due to efficiency gains and slower expansion in energy-intensive production. Overall, the results highlight how AI-related computational activity is becoming a meaningful component of the country’s evolving energy profile.
+
+```{r echo=F,output=F, warning=FALSE,include=F}
+#load your packages quietly
+library(kableExtra)
+library(readxl)
+library(janitor)
+library(tidyverse)
+library(lubridate)
+library(scales)
+library(viridis)
+
+knitr::opts_chunk$set(echo=FALSE,warning=FALSE,message=FALSE)
+```
+
+```{r warning=FALSE,echo=FALSE,include=FALSE,message=FALSE}
+#use this for quiet code
+
+```
+
+
+
+```{r out.width="95%",dpi=150,fig.align="center",fig.width=13,fig.height=7,message=FALSE,warning=FALSE,include=T }
+
+raw <- read_excel("epa_02_02.xlsx", skip = 2)
+
+
+tei_row <- which(raw[[1]] == "Total Electric Industry")
+
+# Extract 11 rows of actual yearly data under it
+block <- raw[(tei_row+1):(tei_row+11), ]
+
+# Clean Commercial + Industrial
+df <- block %>%
+  select(Year, Commercial, Industrial) %>%
+  mutate(
+    Year = as.numeric(Year),
+    Commercial = as.numeric(gsub(",", "", Commercial)),
+    Industrial = as.numeric(gsub(",", "", Industrial)),
+    Commercial_TWh = Commercial / 1e6,
+    Industrial_TWh = Industrial / 1e6
+  )
+df_long <- df %>%
+  pivot_longer(
+    cols = c(Commercial_TWh, Industrial_TWh),
+    names_to = "Sector",
+    values_to = "TWh"
+  ) %>%
+  mutate(
+    Sector = recode(Sector,
+                    "Commercial_TWh" = "Commercial (AI/Data Centres)",
+                    "Industrial_TWh" = "Industrial Sector")
+  )
+
+ggplot(df_long, aes(x = Year, y = TWh, color = Sector)) +
+  geom_line(size = 1.4) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c(
+    "Commercial (AI/Data Centres)" = "#1f78b4",
+    "Industrial Sector" = "#e31a1c"
+  )) +
+  scale_x_continuous(breaks = 2014:2024) +
+  labs(
+    title = "Digital vs Industrial Energy Demand (2014–2024)",
+    subtitle = "Commercial electricity demand is rising as AI, cloud computing, and data centres expand across the U.S. grid.",
+    x = "Year",
+    y = "Electricity Consumption (TWh)",
+    color = "",
+    caption = "Source: U.S. Energy Information Administration, Table 2.2"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold"),
+    plot.caption = element_text(hjust = 1)
+  )
+
+```
+
+My name is Tobi Adebowale, and I’m a third-year Computer Science major with a minor in Economics. I’m pursuing a career in data science or software engineering, with a strong interest in how technology shapes real-world systems. In my free time, I enjoy gaming, coding, and exploring new tools and platforms that sharpen my technical skills.
